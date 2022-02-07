@@ -1,25 +1,25 @@
 #include <dirent.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <math.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#include <limits.h>
-#include <math.h>
-#include <stdio.h>
-#include <stdint.h>
 
 #include "tree.h"
 
-#define BOLD_RED "\033[1;31m"
-#define BOLD_GREEN "\033[1;32m"
-#define BOLD_YELLOW "\033[1;33m"
-#define YELLOW "\033[0;33m"
-#define BOLD_BLUE "\033[1;34m"
-#define BOLD_MAGENTA "\033[1;35m"
-#define BOLD_CYAN "\033[1;36m"
+#define BRBLUE "\033[1;34m"
+#define BRCYAN "\033[1;36m"
+#define BRGREEN "\033[1;32m"
+#define BRMAGENTA "\033[1;35m"
+#define BRRED "\033[1;31m"
+#define BRYELLOW "\033[1;33m"
 #define CYAN "\033[0;36m"
 #define RESET "\033[0m"
+#define YELLOW "\033[0;33m"
 
 
 static void toUpper(char *dest, const char *source)
@@ -35,41 +35,44 @@ static void toUpper(char *dest, const char *source)
 }
 
 
-static void printInColor(mode_t type, Node *node)
+static void printNode(mode_t type, Node *node, bool useColor)
 {
     int link = false;
-    if (node->name[0] == '.') {
-        printf(BOLD_RED);
-        goto print;
+    if (useColor) {
+        if (node->name[0] == '.') {
+            printf(BRRED);
+        } else {
+            switch (type & S_IFMT) {
+            case S_IFREG:
+                if (type & S_IXUSR || type & S_IXGRP || type & S_IXOTH)
+                    printf(BRGREEN);
+                break;
+            case S_IFDIR:
+                printf(BRBLUE);
+                break;
+            case S_IFBLK:
+                printf(BRCYAN);
+                break;
+            case S_IFCHR:
+                printf(CYAN);
+                break;
+            case S_IFIFO:
+                printf(YELLOW);
+                break;
+            case S_IFLNK:
+                printf(BRMAGENTA);
+                link = true;
+                break;
+            case S_IFSOCK:
+                printf(BRYELLOW);
+                break;
+            }
+        }
     }
-    switch (type & S_IFMT) {
-    case S_IFREG:
-        if (type & S_IXUSR || type & S_IXGRP || type & S_IXOTH)
-            printf(BOLD_GREEN);
-        break;
-    case S_IFDIR:
-        printf(BOLD_BLUE);
-        break;
-    case S_IFBLK:
-        printf(BOLD_CYAN);
-        break;
-    case S_IFCHR:
-        printf(CYAN);
-        break;
-    case S_IFIFO:
-        printf(YELLOW);
-        break;
-    case S_IFLNK:
-        printf(BOLD_MAGENTA);
-        link = true;
-        break;
-    case S_IFSOCK:
-        printf(BOLD_YELLOW);
-        break;
-    }
-    print:
     printf("%s", node->name);
-    printf("\033[0m");
+    if (useColor) {
+        printf(RESET);
+    }
     if (link) {
         printf(" -> %s", node->link);
     }
@@ -236,8 +239,8 @@ static void printRoot(Tree *tree, Node *root, int level, int *lastDirs, int chec
         if (r != root) {
             printPrefix(level, i, root->numChildren, lastDirs, tree->options);
         }
-        printInColor(r->type, r);
 
+        printNode(r->type, r, !(tree->options & NO_COLOR_MASK));
 
         if (tree->depth == 0)
             return;
@@ -256,7 +259,7 @@ int printTree(const char *path, const int options, const int depth)
     struct stat st;
     if ((lstat(path, &st))) {
         fprintf(stderr, "Wrong or missing path!\n");
-        return 1;
+        return 3;
     }
 
     if ((st.st_mode & S_IFMT) != S_IFREG &&
