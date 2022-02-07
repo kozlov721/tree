@@ -5,6 +5,7 @@ Just a simple implementation of POSIX compliant `tree` command
 
 To build the program, just use the provided makefile.
 
+```
 Usage: [-sadpxUC] [-d DEPTH] [-h] DIRECTORY
 
 OPTIONS:
@@ -16,3 +17,4 @@ OPTIONS:
   -U          Prints ascii characters instead of unicode ones.
   -C          Disable colors.
   -h          Prints this help and ends the program.
+```
