@@ -4,20 +4,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define MEMORY  'a'
-#define PERC    'p'
-#define DEEP    'd'
-#define ASCII   'U'
-#define DEVICE  'x'
-#define SORT    's'
-#define HELP    'h'
-
-#define MEMORY_MASK  0b100000
-#define PERC_MASK    0b010000
-#define DEEP_MASK    0b001000
-#define ASCII_MASK   0b000100
-#define DEVICE_MASK  0b000010
-#define SORT_MASK    0b000001
+#define MEMORY_MASK   0b100000
+#define PERC_MASK     0b010000
+#define ASCII_MASK    0b001000
+#define DEVICE_MASK   0b000100
+#define SORT_MASK     0b000010
+#define NO_COLOR_MASK 0b000001
 
 
 struct Node;

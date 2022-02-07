@@ -1,28 +1,39 @@
 #include <string.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <ctype.h>
 #include "tree.h"
 
+#define MEMORY   'a'
+#define PERC     'p'
+#define DEPTH     'd'
+#define ASCII    'U'
+#define NO_COLOR 'C'
+#define DEVICE   'x'
+#define SORT     's'
+#define HELP     'h'
 
 void printHelp(void)
 {
-    fprintf(stderr, "Usage: [OPTIONS] [-d DEPTH] DIRECTORY\n"
+    fprintf(stderr, "Usage: [-sadpxUC] [-d DEPTH] [-h] DIRECTORY\n"
            "\n"
            "OPTIONS:\n"
            "\t-s\t\tSorts printed files by size instead of by name.\n"
            "\t-a\t\tPrints apparent size instead of the size in blocks.\n"
            "\t-d [DEPTH]\tLimits the depth of output, but scans the whole tree.\n"
            "\t-p\t\toptions size format to percents instead of the size itself.\n"
-           "\t-U\t\tPrints ascii characters instead of unicode ones.\n"
            "\t-x\t\tDoes not cross filesystem boundaries when performing scan.\n"
-           "\t-h\t\tPrints help and ends the program.\n");
+           "\t-U\t\tPrints ascii characters instead of unicode ones.\n"
+           "\t-C\t\tDisable colors.\n"
+           "\t-h\t\tPrints this help and ends the program.\n");
 }
 
 
-bool isValidDepth(const char *string)
+bool isValidInteger(const char *string)
 {
-    for (size_t i = 0; i < strlen(string); i++) {
-        if (string[i] < '0' || string[i] > '9') {
+    for (size_t i = 0; string[i] != '\0'; ++i) {
+        if (!isdigit(string[i])) {
             return false;
         }
     }
@@ -30,52 +41,64 @@ bool isValidDepth(const char *string)
 }
 
 
-int getOptions(int size, const char **input, int *depth)
+int parseOptions(int size, const char **input, int *depth)
 {
     int options = 0;
-    char used[24] = { 0 };
-    int i = 1;
-    do {
-        if (input[i][0] != '-' || input[i][2] != '\0' || strchr(used, input[i][1])) {
-            if (i == size) {
-                continue;
+    bool expectingDepth = false;
+
+    for (int i = 1; i < size; ++i) {
+        if (input[i][0] == '-') {
+            const char *option = input[i];
+            for (int j = 1; option[j] != '\0'; ++j) {
+                switch (option[j]) {
+                case MEMORY:
+                    options |= MEMORY_MASK;
+                    break;
+                case PERC:
+                    options |= PERC_MASK;
+                    break;
+                case DEPTH:
+                    expectingDepth = true;
+                    break;
+                case ASCII:
+                    options |= ASCII_MASK;
+                    break;
+                case DEVICE:
+                    options |= DEVICE_MASK;
+                    break;
+                case SORT:
+                    options |= SORT_MASK;
+                    break;
+                case NO_COLOR:
+                    options |= NO_COLOR_MASK;
+                    break;
+                case HELP:
+                    printHelp();
+                    exit(0);
+                default:
+                    fprintf(stderr, "Unrecognized option \"-%c\".\n", option[j]);
+                    printHelp();
+                    exit(1);
+                }
             }
-            return -1;
-        }
-        switch (input[i][1]) {
-        case MEMORY:
-            options |= MEMORY_MASK;
-            break;
-        case PERC:
-            options |= PERC_MASK;
-            break;
-        case DEEP:
-            if (i == size - 1 || !isValidDepth(input[i + 1])) {
-                return -3;
-            } else {
-                sscanf(input[i + 1], "%d", depth);
+        } else if (expectingDepth) {
+            if (!isValidInteger(input[i])) {
+                fprintf(stderr, "Depth must be positive integer!\n");
+                exit(2);
             }
-            options |= DEEP_MASK;
-            i++;
-            break;
-        case ASCII:
-            options |= ASCII_MASK;
-            break;
-        case DEVICE:
-            options |= DEVICE_MASK;
-            break;
-        case SORT:
-            options |= SORT_MASK;
-            break;
-        case HELP:
+            sscanf(input[i], "%u", depth);
+            expectingDepth = false;
+        } else {
+            fprintf(stderr, "Unrecognized option \"%s\".\n", input[i]);
             printHelp();
-            return -2;
-        default:
-            return -1;
+            exit(1);
         }
-        used[i - 1] = input[i][1];
-        i++;
-    } while (i < size);
+    }
+
+    if (expectingDepth) {
+        fprintf(stderr, "Depth must be provided!\n");
+        exit(2);
+    }
     return options;
 }
 
@@ -83,20 +106,7 @@ int getOptions(int size, const char **input, int *depth)
 int main(int argc, const char **argv)
 {
     int depth = INT_MAX;
-    int options = getOptions(argc - 1, argv, &depth);
-    if (options == -3) {
-        fprintf(stderr, "Depth must be a positive integer!\n");
-        printHelp();
-        return 3;
-    }
-    if (options == -1) {
-        fprintf(stderr, "Unrecognized option!\n");
-        printHelp();
-        return 2;
-    }
-    if (options == -2) {
-        return 0;
-    }
+    int options = parseOptions(argc - 1, argv, &depth);
     const char *path = argv[argc - 1];
     return printTree(path, options, depth);
 }
