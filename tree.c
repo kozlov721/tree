@@ -289,7 +289,7 @@ int printTree(const char *path, const int options, const int depth)
     if (path[strlen(path) - 1] != '/') {
         if (!(cwd = opendir(path))) {
             fclose(stderr);
-            loadTree(&root, NULL, &tree);
+            loadTree(&root, &tree);
         }
     } else {
         if (!(cwd = opendir(path))) {
@@ -298,7 +298,7 @@ int printTree(const char *path, const int options, const int depth)
     }
 
     closedir(cwd);
-    loadTree(&root, &root, &tree);
+    loadTree(&root, &tree);
     int lastDirs[2050];
     if (!tree.root->numChildren) {
         printLineHeader(tree.root, &tree);
@@ -311,7 +311,7 @@ int printTree(const char *path, const int options, const int depth)
 }
 
 
-int loadTree(Node *root, Node *parent, Tree *tree)
+int loadTree(Node *root, Tree *tree)
 {
     DIR *cwd;
     struct dirent *dir;
@@ -356,7 +356,7 @@ int loadTree(Node *root, Node *parent, Tree *tree)
         }
 
         if ((st.st_mode & S_IFMT) == S_IFDIR) {
-            if (loadTree(&node, root, tree)) {
+            if (loadTree(&node, tree)) {
                 node.nonSuccessOpen = true;
             }
         }

@@ -1,7 +1,7 @@
 # Project: simple clone of tree
 # Author: Martin Kozlovský
 
-FLAGS = -Wall -Wno-format -Werror -lm
+FLAGS = -Wall -Wno-format -Werror -pedantic -Wextra -lm
 NAME = tree
 
 all:

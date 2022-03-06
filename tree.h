@@ -4,12 +4,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define MEMORY_MASK   0b100000
-#define PERC_MASK     0b010000
-#define ASCII_MASK    0b001000
-#define DEVICE_MASK   0b000100
-#define SORT_MASK     0b000010
-#define NO_COLOR_MASK 0b000001
+#define MEMORY_MASK   32  // 0b100000
+#define PERC_MASK     16  // 0b010000
+#define ASCII_MASK    8   // 0b001000
+#define DEVICE_MASK   4   // 0b000100
+#define SORT_MASK     2   // 0b000010
+#define NO_COLOR_MASK 1   // 0b000001
 
 
 struct Node;
@@ -56,11 +56,10 @@ int printTree(const char *path, const int options, const int depth);
 /**
  * @brief loads directory tree and stores it in Tree struct
  * @param pointer to the Node struct of root directory
- * @param pointer to the Node struct of parent directory
  * @param tree
  * @return  zero on success, non-zero otherwise
  */
-int loadTree(Node *root, Node *parent, Tree *tree);
+int loadTree(Node *root, Tree *tree);
 
 
 /**
